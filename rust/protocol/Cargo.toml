@@ -46,6 +46,7 @@ subtle = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 zerocopy = { workspace = true, features = ["derive"] }
+zeroize = { workspace = true }
 
 [features]
 kyber768 = ["libcrux-ml-kem/kyber", "libcrux-ml-kem/mlkem768"]

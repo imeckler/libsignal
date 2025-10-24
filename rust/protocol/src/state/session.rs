@@ -10,6 +10,7 @@ use bitflags::bitflags;
 use prost::Message;
 use rand::{CryptoRng, Rng};
 use subtle::ConstantTimeEq;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::proto::storage::{RecordStructure, SessionStructure, session_structure};
 use crate::protocol::CIPHERTEXT_MESSAGE_PRE_KYBER_VERSION;
@@ -132,6 +133,107 @@ bitflags! {
 pub(crate) struct SessionState {
     session: SessionStructure,
 }
+
+impl Zeroize for SessionState {
+    fn zeroize(&mut self) {
+        let Self { session } = self;
+        let SessionStructure {
+            session_version,
+            local_identity_public,
+            remote_identity_public,
+            root_key,
+            previous_counter,
+            sender_chain,
+            receiver_chains,
+            pending_pre_key,
+            pending_kyber_pre_key,
+            remote_registration_id,
+            local_registration_id,
+            alice_base_key,
+            pq_ratchet_state,
+        } = session;
+
+        fn zeroize_message_key(message_key: &mut session_structure::chain::MessageKey) {
+            let session_structure::chain::MessageKey {
+                index,
+                cipher_key,
+                mac_key,
+                iv,
+                seed,
+            } = message_key;
+            index.zeroize();
+            cipher_key.zeroize();
+            mac_key.zeroize();
+            iv.zeroize();
+            seed.zeroize();
+        }
+
+        fn zeroize_chain_key(chain_key: &mut session_structure::chain::ChainKey) {
+            let session_structure::chain::ChainKey { index, key } = chain_key;
+            index.zeroize();
+            key.zeroize();
+        }
+
+        fn zeroize_chain(chain: &mut session_structure::Chain) {
+            let session_structure::Chain {
+                sender_ratchet_key,
+                sender_ratchet_key_private,
+                chain_key,
+                message_keys,
+            } = chain;
+            sender_ratchet_key.zeroize();
+            sender_ratchet_key_private.zeroize();
+            chain_key.iter_mut().for_each(zeroize_chain_key);
+            message_keys.iter_mut().for_each(zeroize_message_key);
+        }
+
+        fn zeroize_pending_pre_key(key: &mut session_structure::PendingPreKey) {
+            let session_structure::PendingPreKey {
+                pre_key_id,
+                signed_pre_key_id,
+                base_key,
+                timestamp,
+            } = key;
+            pre_key_id.zeroize();
+            signed_pre_key_id.zeroize();
+            base_key.zeroize();
+            timestamp.zeroize();
+        }
+
+        fn zeroize_pending_kyber_pre_key(key: &mut session_structure::PendingKyberPreKey) {
+            let session_structure::PendingKyberPreKey {
+                pre_key_id,
+                ciphertext,
+            } = key;
+            pre_key_id.zeroize();
+            ciphertext.zeroize();
+        }
+
+        session_version.zeroize();
+        local_identity_public.zeroize();
+        remote_identity_public.zeroize();
+        root_key.zeroize();
+        previous_counter.zeroize();
+        sender_chain.iter_mut().for_each(zeroize_chain);
+        receiver_chains.iter_mut().for_each(zeroize_chain);
+        pending_pre_key.iter_mut().for_each(zeroize_pending_pre_key);
+        pending_kyber_pre_key
+            .iter_mut()
+            .for_each(zeroize_pending_kyber_pre_key);
+        remote_registration_id.zeroize();
+        local_registration_id.zeroize();
+        alice_base_key.zeroize();
+        pq_ratchet_state.zeroize();
+    }
+}
+
+impl Drop for SessionState {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl ZeroizeOnDrop for SessionState {}
 
 impl SessionState {
     pub(crate) fn from_session_structure(session: SessionStructure) -> Self {
@@ -624,12 +726,6 @@ impl SessionState {
 impl From<SessionStructure> for SessionState {
     fn from(value: SessionStructure) -> SessionState {
         SessionState::from_session_structure(value)
-    }
-}
-
-impl From<SessionState> for SessionStructure {
-    fn from(value: SessionState) -> SessionStructure {
-        value.session
     }
 }
 

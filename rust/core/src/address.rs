@@ -798,6 +798,11 @@ impl ProtocolAddress {
         &self.name
     }
 
+    /// Get the underlying data
+    pub fn to_name_and_id(self) -> (String, DeviceId) {
+        (self.name, self.device_id)
+    }
+
     /// An identifier representing a particular Signal client instance to send to.
     ///
     /// For example, if a user has set up Signal on both their phone and laptop, a particular

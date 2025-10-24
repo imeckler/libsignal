@@ -11,6 +11,7 @@ use std::fmt;
 use std::num::NonZeroU8;
 
 use uuid::Uuid;
+use zeroize::Zeroize;
 
 /// Known types of [ServiceId].
 #[derive(Clone, Copy, Hash, PartialEq, Eq, derive_more::TryFrom)]
@@ -674,7 +675,7 @@ mod service_id_tests {
 /// represents some user.
 ///
 /// Used in [ProtocolAddress].
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Zeroize)]
 pub struct DeviceId(NonZeroU8);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, thiserror::Error)]
@@ -762,7 +763,7 @@ impl rand::distr::Distribution<DeviceId> for rand::distr::StandardUniform {
 }
 
 /// Represents a unique Signal client instance as `(<user ID>, <device ID>)` pair.
-#[derive(Clone, Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Zeroize)]
 pub struct ProtocolAddress {
     name: String,
     device_id: DeviceId,
@@ -796,11 +797,6 @@ impl ProtocolAddress {
     #[inline]
     pub fn name(&self) -> &str {
         &self.name
-    }
-
-    /// Get the underlying data
-    pub fn to_name_and_id(self) -> (String, DeviceId) {
-        (self.name, self.device_id)
     }
 
     /// An identifier representing a particular Signal client instance to send to.

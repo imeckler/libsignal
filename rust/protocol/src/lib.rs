@@ -30,7 +30,7 @@ mod group_cipher;
 mod identity_key;
 pub mod incremental_mac;
 pub mod kem;
-mod proto;
+pub mod proto;
 mod protocol;
 mod ratchet;
 mod sealed_sender;

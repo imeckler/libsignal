@@ -8,6 +8,7 @@ fn main() {
         "src/proto/fingerprint.proto",
         "src/proto/sealed_sender.proto",
         "src/proto/service.proto",
+        "src/proto/signalservice.proto",
         "src/proto/storage.proto",
         "src/proto/wire.proto",
     ];

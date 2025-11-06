@@ -6,5 +6,6 @@
 pub mod fingerprint;
 pub mod sealed_sender;
 pub mod service;
+pub mod signalservice;
 pub mod storage;
 pub mod wire;
